@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No translation of sample extensions -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2" xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- Name of app, shown when installing/uninstalling extension -->
+    <string name="app_name">PeekScreen SW</string>
+    <!-- Title of preference activity -->
+    <string name="preference_activity_title">PeekScreen SW Preferences</string>
+    <!-- Name of extension, shown in preferences -->
+    <string name="extension_name">PeekScreen SW</string>
+    <!-- Configuration title shown in preferences -->
+    <string name="configuration_text">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;!-- No translation of sample extensions --&gt;
+&lt;resources xmlns:xliff=&quot;urn:oasis:names:tc:xliff:document:1.2&quot; xmlns:tools=&quot;http://schemas.android.com/tools&quot; tools:ignore=&quot;MissingTranslation&quot;&gt;
+    &lt;!-- Name of app, shown when installing/uninstalling extension --&gt;
+    &lt;string name=&quot;app_name&quot;&gt;PeekScreen SW&lt;/string&gt;
+    &lt;!-- Title of preference activity --&gt;
+    &lt;string name=&quot;preference_activity_title&quot;&gt;PeekScreen SW Preferences&lt;/string&gt;
+    &lt;!-- Name of extension, shown in preferences --&gt;
+    &lt;string name=&quot;extension_name&quot;&gt;PeekScreen SW&lt;/string&gt;
+    &lt;!-- Configuration title shown in preferences --&gt;
+    &lt;string name=&quot;configuration_text&quot;&gt;Sample control settings&lt;/string&gt;
+    &lt;!-- Menu option shown in preferences --&gt;
+    &lt;string name=&quot;preference_option_read_me&quot;&gt;READ ME&lt;/string&gt;
+    &lt;!-- Read me text shown in dialog --&gt;
+    &lt;string name=&quot;preference_option_read_me_txt&quot;&gt;The sample control extension starts an animation on the accessory when started. This extension supports SmartWatch2, SmartWatch and Smart Wireless Headset pro.\n\nIn SmartWatch the animation can be stopped by tapping on the screen. \n\nSmart Wireless Headset pro shows a scrolling text that can be paused and resumed with Play/Pause key. The text can also be manually controlled by using the the Previous and Next Keys. Control animation speed can be changed using Volume up and Volume down key.&lt;/string&gt;
+
+    &lt;!-- Text drawn in control on Smart Wireless Headset pro--&gt;
+    &lt;string name=&quot;sample_control_headset_pro_text&quot;&gt;Press Prev or Next&lt;/string&gt;
+
+&lt;/resources&gt;
+PeekScreen SW Preferences</string>
+    <!-- Menu option shown in preferences -->
+    <string name="preference_option_read_me">About</string>
+    <!-- Read me text shown in dialog -->
+    <string name="preference_option_read_me_txt">PeekScreen allows you to stream display of your smartphone into display of your smartwatch</string>
+
+    <!-- Text drawn in control on Smart Wireless Headset pro-->
+    <string name="sample_control_headset_pro_text">ChangeThis</string>
+
+</resources>

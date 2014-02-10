@@ -44,23 +44,29 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.sonyericsson.extras.liveware.aef.control.Control;
+import com.sonyericsson.extras.liveware.extension.util.ExtensionUtils;
 import com.sonyericsson.extras.liveware.extension.util.control.ControlExtension;
 import com.sonyericsson.extras.liveware.extension.util.control.ControlObjectClickEvent;
+import com.sonyericsson.extras.liveware.extension.util.control.ControlView;
 import com.sonyericsson.extras.liveware.extension.util.control.ControlViewGroup;
-import com.sonymobile.smartconnect.extension.controlsample.R;
+import com.sonyericsson.extras.liveware.extension.util.control.ControlView.OnClickListener;
+import com.sonymobile.smartconnect.extension.peekscreen.R;
 
-/**
- * The sample control for SmartWatch handles the control on the accessory. This
- * class exists in one instance for every supported host application that we
- * have registered to
- */
+
 class PeekScreenControlSW2 extends ControlExtension {
 
     private static final int ANIMATION_DELTA_MS = 500;
-
+    private static final int MENU_ITEM_0 = 0;
+    private static final int MENU_ITEM_1 = 1;
+    
     private Handler mHandler;
 
     private boolean mIsShowingAnimation = false;
@@ -68,7 +74,8 @@ class PeekScreenControlSW2 extends ControlExtension {
     private Animation mAnimation = null;
 
     private ControlViewGroup mLayout = null;
-
+    Bundle[] mMenuItemsText = new Bundle[2];
+    
     private Bitmap mRotateBitmap = null;
 
 	public PowerManager pm;
@@ -81,15 +88,10 @@ class PeekScreenControlSW2 extends ControlExtension {
 	public int offsetX,offsetY;   
 
 	// Gets FrameSize value from settings, If it is not set set 128
-	int sizeW=440;
+	int sizeW=660;
 	int sizeH=176*(sizeW/220);
-    /**
-     * Create sample control.
-     *
-     * @param hostAppPackageName Package name of host application.
-     * @param context The context.
-     * @param handler The handler to use
-     */
+
+	int displayWidth=0;
     PeekScreenControlSW2(final String hostAppPackageName, final Context context,
             Handler handler) {
         super(context, hostAppPackageName);
@@ -97,9 +99,56 @@ class PeekScreenControlSW2 extends ControlExtension {
             throw new IllegalArgumentException("handler == null");
         }
         mHandler = handler;
+        initializeMenus();
+        
+        WindowManager window = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE); 
+        Display display = window.getDefaultDisplay();
+        displayWidth = display.getWidth();
+        
+        setFrameSizeWidth(displayWidth);
+    }
+    private void setFrameSizeWidth(int w)
+    {
+    	sizeW=Math.max(10,Math.min(displayWidth, w));
+    	sizeH=176*(sizeW/220);
+    }
+    boolean mTextMenu=false;
+    private void toggleMenu() {
+        showMenu(mMenuItemsText);
+        mTextMenu = !mTextMenu;
+    }
+    @Override
+    public void onMenuItemSelected(final int menuItem) {
+        if (menuItem == MENU_ITEM_0) 
+        {
+        	// Zoom In
+        	setFrameSizeWidth((int)(sizeW*0.75f));
+        	mAnimation.updateAnimation();
+        }
+        if (menuItem == MENU_ITEM_1)
+        {
+        	// Zoom Out
+        	setFrameSizeWidth((int)(sizeW*1.25f));
+        	mAnimation.updateAnimation();
+        }
+    }
+    private void initializeMenus() {
+        mMenuItemsText[0] = new Bundle();
+        mMenuItemsText[0].putInt(Control.Intents.EXTRA_MENU_ITEM_ID, MENU_ITEM_0);
+        mMenuItemsText[0].putString(Control.Intents.EXTRA_MENU_ITEM_TEXT, "Zoom In");
+        mMenuItemsText[1] = new Bundle();
+        mMenuItemsText[1].putInt(Control.Intents.EXTRA_MENU_ITEM_ID, MENU_ITEM_1);
+        mMenuItemsText[1].putString(Control.Intents.EXTRA_MENU_ITEM_TEXT, "Zoom Out");
+
     }
 
-    
+	@Override
+	public void onStart() {
+		pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "tag");
+		km = (KeyguardManager) mContext.getSystemService(mContext.KEYGUARD_SERVICE);
+	}
+	
     /**
      * Get supported control width.
      *
@@ -126,15 +175,6 @@ class PeekScreenControlSW2 extends ControlExtension {
         mHandler = null;
     };
 
-    @Override
-    public void onStart() {
-
-    }
-
-    @Override
-    public void onStop() {
-        // Nothing to do. Animation is handled in onPause.
-    }
 
     @Override
     public void onResume() {
@@ -155,24 +195,19 @@ class PeekScreenControlSW2 extends ControlExtension {
     }
 
     @Override
-    public void onPause() {
-        Log.d(SampleExtensionService.LOG_TAG, "Stopping animation");
-    }
-
-    @Override
     public void onSwipe(int direction) {
         switch (direction) {
 	        case Control.Intents.SWIPE_DIRECTION_DOWN:
-	        	offsetY+=sizeH/2;
-	        break;
-	        case Control.Intents.SWIPE_DIRECTION_UP:
 	        	offsetY-=sizeH/2;
 	        break;
+	        case Control.Intents.SWIPE_DIRECTION_UP:
+	        	offsetY+=sizeH/2;
+	        break;
 	        case Control.Intents.SWIPE_DIRECTION_LEFT:
-	        	offsetX-=sizeW/2;
+	        	offsetX+=sizeW/2;
 	        break;
 	        case Control.Intents.SWIPE_DIRECTION_RIGHT:
-	        	offsetX+=sizeW/2;
+	        	offsetX-=sizeW/2;
 	        break;
         }
     }
@@ -189,7 +224,7 @@ class PeekScreenControlSW2 extends ControlExtension {
         Log.d(SampleExtensionService.LOG_TAG, "onKey()");
         if (action == Control.Intents.KEY_ACTION_RELEASE
                 && keyCode == Control.KeyCodes.KEYCODE_OPTIONS) {
-            //toggleMenu();
+            toggleMenu();
         }
         else if (action == Control.Intents.KEY_ACTION_RELEASE
                 && keyCode == Control.KeyCodes.KEYCODE_BACK) {
@@ -242,26 +277,29 @@ class PeekScreenControlSW2 extends ControlExtension {
     		isReady=false;
 
     		// Unlocks keylock & turn on backlight to take screenshot of current app.
-    		/*
+    		
     		if ((wl != null) && (wl.isHeld() == false)) { 
     			 wl.acquire();
     			 km.newKeyguardLock("unlock1").disableKeyguard();
     		}
-    		*/
+    		
     		// Takes screenshot and saves it
     		 try {
-    			 sh = Runtime.getRuntime().exec("su", null,null);
-    			 os = sh.getOutputStream();
+    			sh = Runtime.getRuntime().exec("su", null,null);
+ 				os = sh.getOutputStream();
     	        os.write(("/system/bin/screencap -p " + Environment.getExternalStorageDirectory()+ File.separator +"img.png").getBytes("ASCII"));
     	        os.flush();
     	        
     	        os.close();
-    	        sh.waitFor();
+    	        try {
+					sh.waitFor();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    	        
     		} catch (IOException e) {
-    			System.out.println("didnt do it");
-    			e.printStackTrace();
-    		} catch (InterruptedException e) {
-    			System.out.println("didnt do it");
+    			Log.d(SampleExtensionService.LOG_TAG, "didnt do it1");
     			e.printStackTrace();
     		}	
     			
@@ -295,6 +333,7 @@ class PeekScreenControlSW2 extends ControlExtension {
     		// Send Image
     		
             sendImage(R.id.animatedImage, mRotateBitmap);
+            
     		isReady=true;
         }
     };

@@ -32,7 +32,7 @@ Copyright (c) 2011-2013, Sony Mobile Communications AB
 
 package com.sonymobile.smartconnect.extension.peekscreen;
 
-import com.sonymobile.smartconnect.extension.controlsample.R;
+import com.sonymobile.smartconnect.extension.peekscreen.R;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

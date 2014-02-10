@@ -45,7 +45,7 @@ import android.util.Log;
 import com.sonyericsson.extras.liveware.aef.control.Control;
 import com.sonyericsson.extras.liveware.extension.util.SmartWirelessHeadsetProUtil;
 import com.sonyericsson.extras.liveware.extension.util.control.ControlExtension;
-import com.sonymobile.smartconnect.extension.controlsample.R;
+import com.sonymobile.smartconnect.extension.peekscreen.R;
 
 /**
  * The sample control for Smart Wireless Headset pro handles the control on the

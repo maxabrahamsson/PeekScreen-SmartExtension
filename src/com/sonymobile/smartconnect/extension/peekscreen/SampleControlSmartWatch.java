@@ -48,7 +48,7 @@ import android.widget.TextView;
 import com.sonyericsson.extras.liveware.aef.control.Control;
 import com.sonyericsson.extras.liveware.extension.util.control.ControlExtension;
 import com.sonyericsson.extras.liveware.extension.util.control.ControlTouchEvent;
-import com.sonymobile.smartconnect.extension.controlsample.R;
+import com.sonymobile.smartconnect.extension.peekscreen.R;
 
 /**
  * The sample control for SmartWatch handles the control on the accessory.

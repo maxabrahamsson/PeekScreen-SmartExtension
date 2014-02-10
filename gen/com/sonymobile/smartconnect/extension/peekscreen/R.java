@@ -5,7 +5,7 @@
  * should not be modified by hand.
  */
 
-package com.sonymobile.smartconnect.extension.controlsample;
+package com.sonymobile.smartconnect.extension.peekscreen;
 
 public final class R {
     public static final class attr {

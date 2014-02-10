@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.sonymobile.smartconnect.extension.controlsample"
+    package="com.sonymobile.smartconnect.extension.peekscreen"
     android:versionCode="10100"
     android:versionName="1.1.0" >
 
@@ -9,7 +9,11 @@
         android:targetSdkVersion="18" />
 
     <uses-permission android:name="com.sonyericsson.extras.liveware.aef.EXTENSION_PERMISSION" />
-
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    
     <application
         android:allowBackup="false"
         android:icon="@drawable/icon"
@@ -23,10 +27,10 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".SampleExtensionService" />
+        <service android:name="com.sonymobile.smartconnect.extension.peekscreen.SampleExtensionService" />
 
         <receiver
-            android:name=".ExtensionReceiver"
+            android:name="com.sonymobile.smartconnect.extension.peekscreen.ExtensionReceiver"
             android:permission="com.sonyericsson.extras.liveware.aef.HOSTAPP_PERMISSION" >
             <intent-filter>
 

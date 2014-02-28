@@ -93,8 +93,8 @@ public class SampleExtensionService extends ExtensionService {
             return new PeekScreenControlSW2(hostAppPackageName, this, new Handler());
         } else {
             // If not we return an API level 1 control based on screen size
-            final int controlSWWidth = SampleControlSmartWatch.getSupportedControlWidth(this);
-            final int controlSWHeight = SampleControlSmartWatch.getSupportedControlHeight(this);
+            final int controlSWWidth = PeekScreenControlSW.getSupportedControlWidth(this);
+            final int controlSWHeight = PeekScreenControlSW.getSupportedControlHeight(this);
             final int controlSWHPWidth = SampleControlSmartWirelessHeadsetPro
                     .getSupportedControlWidth(this);
             final int controlSWHPHeight = SampleControlSmartWirelessHeadsetPro
@@ -105,7 +105,7 @@ public class SampleExtensionService extends ExtensionService {
                     .getDevices()) {
                 for (DisplayInfo display : device.getDisplays()) {
                     if (display.sizeEquals(controlSWWidth, controlSWHeight)) {
-                        return new SampleControlSmartWatch(hostAppPackageName, this, new Handler());
+                        return new PeekScreenControlSW(hostAppPackageName, this, new Handler());
                     } else if (display.sizeEquals(controlSWHPWidth, controlSWHPHeight)) {
                         return new SampleControlSmartWirelessHeadsetPro(hostAppPackageName, this,
                                 new Handler());

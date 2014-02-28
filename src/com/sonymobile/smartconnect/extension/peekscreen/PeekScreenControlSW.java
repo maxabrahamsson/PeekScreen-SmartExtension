@@ -32,15 +32,24 @@ Copyright (c) 2011-2013, Sony Mobile Communications AB
 
 package com.sonymobile.smartconnect.extension.peekscreen;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import android.app.KeyguardManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Environment;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -55,7 +64,7 @@ import com.sonymobile.smartconnect.extension.peekscreen.R;
  * This class exists in one instance for every supported host application that
  * we have registered to
  */
-class SampleControlSmartWatch extends ControlExtension {
+class PeekScreenControlSW extends ControlExtension {
 
     private static final Bitmap.Config BITMAP_CONFIG = Bitmap.Config.RGB_565;
 
@@ -77,6 +86,21 @@ class SampleControlSmartWatch extends ControlExtension {
 
     private final int height;
 
+    
+    private Bitmap mRotateBitmap = null;
+
+	public PowerManager pm;
+	public PowerManager.WakeLock wl ; 
+	public KeyguardManager km;
+	public Process sh;
+	public OutputStream os;
+	public boolean isReady=true;
+	// Offset values for screenshot positioning
+	public int offsetX,offsetY;   
+
+	// Gets FrameSize value from settings, If it is not set set 128
+	int sizeW=660;
+	int sizeH=176*(sizeW/220);
     /**
      * Create sample control.
      *
@@ -84,7 +108,8 @@ class SampleControlSmartWatch extends ControlExtension {
      * @param context The context.
      * @param handler The handler to use
      */
-    SampleControlSmartWatch(final String hostAppPackageName, final Context context,
+	int displayWidth=0;
+    PeekScreenControlSW(final String hostAppPackageName, final Context context,
             Handler handler) {
         super(context, hostAppPackageName);
         if (handler == null) {
@@ -93,8 +118,17 @@ class SampleControlSmartWatch extends ControlExtension {
         mHandler = handler;
         width = getSupportedControlWidth(context);
         height = getSupportedControlHeight(context);
-    }
 
+        WindowManager window = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE); 
+        Display display = window.getDefaultDisplay();
+        displayWidth = display.getWidth();
+        setFrameSizeWidth(displayWidth);
+    }
+    private void setFrameSizeWidth(int w)
+    {
+    	sizeW=Math.max(10,Math.min(displayWidth, w));
+    	sizeH=176*(sizeW/220);
+    }
     /**
      * Get supported control width.
      *
@@ -132,7 +166,23 @@ class SampleControlSmartWatch extends ControlExtension {
     public void onStop() {
         // Nothing to do. Animation is handled in onPause.
     }
-
+    @Override
+    public void onSwipe(int direction) {
+        switch (direction) {
+	        case Control.Intents.SWIPE_DIRECTION_DOWN:
+	        	offsetY-=sizeH/2;
+	        break;
+	        case Control.Intents.SWIPE_DIRECTION_UP:
+	        	offsetY+=sizeH/2;
+	        break;
+	        case Control.Intents.SWIPE_DIRECTION_LEFT:
+	        	offsetX+=sizeW/2;
+	        break;
+	        case Control.Intents.SWIPE_DIRECTION_RIGHT:
+	        	offsetX-=sizeW/2;
+	        break;
+        }
+    }
     @Override
     public void onResume() {
         mIsVisible = true;
@@ -193,8 +243,6 @@ class SampleControlSmartWatch extends ControlExtension {
     private class Animation implements Runnable {
         private int mIndex = 1;
 
-        private final Bitmap mBackground;
-
         private boolean mIsStopped = false;
 
         /**
@@ -203,29 +251,7 @@ class SampleControlSmartWatch extends ControlExtension {
         Animation() {
             mIndex = 1;
 
-            // Extract the last part of the host application package name.
-            String packageName = mHostAppPackageName
-                    .substring(mHostAppPackageName.lastIndexOf(".") + 1);
-
-            // Create background bitmap for animation.
-            mBackground = Bitmap.createBitmap(width, height, BITMAP_CONFIG);
-            // Set default density to avoid scaling.
-            mBackground.setDensity(DisplayMetrics.DENSITY_DEFAULT);
-
-            LinearLayout root = new LinearLayout(mContext);
-            root.setLayoutParams(new LayoutParams(width, height));
-
-            LinearLayout sampleLayout = (LinearLayout)LinearLayout.inflate(mContext,
-                    R.layout.sample_control, root);
-            ((TextView)sampleLayout.findViewById(R.id.sample_control_text)).setText(packageName);
-            sampleLayout.measure(width, height);
-            sampleLayout.layout(0, 0, sampleLayout.getMeasuredWidth(),
-                    sampleLayout.getMeasuredHeight());
-
-            Canvas canvas = new Canvas(mBackground);
-            sampleLayout.draw(canvas);
-
-            showBitmap(mBackground);
+            updateAnimation();
         }
 
         /**
@@ -237,32 +263,9 @@ class SampleControlSmartWatch extends ControlExtension {
 
         @Override
         public void run() {
-            int resourceId;
-            switch (mIndex) {
-                case 1:
-                    resourceId = R.drawable.generic_anim_1_icn;
-                    break;
-                case 2:
-                    resourceId = R.drawable.generic_anim_2_icn;
-                    break;
-                case 3:
-                    resourceId = R.drawable.generic_anim_3_icn;
-                    break;
-                case 4:
-                    resourceId = R.drawable.generic_anim_2_icn;
-                    break;
-                default:
-                    Log.e(SampleExtensionService.LOG_TAG, "mIndex out of bounds: " + mIndex);
-                    resourceId = R.drawable.generic_anim_1_icn;
-                    break;
-            }
-            mIndex++;
-            if (mIndex > 4) {
-                mIndex = 1;
-            }
 
             if (!mIsStopped) {
-                updateAnimation(resourceId);
+                updateAnimation();
             }
             if (mHandler != null && !mIsStopped) {
                 mHandler.postDelayed(this, ANIMATION_DELTA_MS);
@@ -275,25 +278,70 @@ class SampleControlSmartWatch extends ControlExtension {
          *
          * @param resourceId The new resource to show.
          */
-        private void updateAnimation(int resourceId) {
-            Bitmap animation = BitmapFactory.decodeResource(mContext.getResources(), resourceId,
-                    mBitmapOptions);
+        private void updateAnimation() {
+      		if(!isReady) {return;}
 
-            // Create a bitmap for the part of the screen that needs updating.
-            Bitmap bitmap = Bitmap.createBitmap(animation.getWidth(), animation.getHeight(),
-                    BITMAP_CONFIG);
-            bitmap.setDensity(DisplayMetrics.DENSITY_DEFAULT);
-            Canvas canvas = new Canvas(bitmap);
-            Paint paint = new Paint();
-            Rect src = new Rect(ANIMATION_X_POS, ANIMATION_Y_POS, ANIMATION_X_POS
-                    + animation.getWidth(), ANIMATION_Y_POS + animation.getHeight());
-            Rect dst = new Rect(0, 0, animation.getWidth(), animation.getHeight());
+    		// Locks screenshot process until finish
+    		isReady=false;
 
-            // Add first the background and then the animation.
-            canvas.drawBitmap(mBackground, src, dst, paint);
-            canvas.drawBitmap(animation, 0, 0, paint);
-
-            showBitmap(bitmap, ANIMATION_X_POS, ANIMATION_Y_POS);
+    		// Unlocks keylock & turn on backlight to take screenshot of current app.
+    		
+    		if ((wl != null) && (wl.isHeld() == false)) { 
+    			 wl.acquire();
+    			 km.newKeyguardLock("unlock1").disableKeyguard();
+    		}
+    		
+    		// Takes screenshot and saves it
+    		 try {
+    			sh = Runtime.getRuntime().exec("su", null,null);
+ 				os = sh.getOutputStream();
+    	        os.write(("/system/bin/screencap -p " + Environment.getExternalStorageDirectory()+ File.separator +"img.png").getBytes("ASCII"));
+    	        os.flush();
+    	        
+    	        os.close();
+    	        try {
+					sh.waitFor();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    	        
+    		} catch (IOException e) {
+    			Log.d(SampleExtensionService.LOG_TAG, "didnt do it1");
+    			e.printStackTrace();
+    		}	
+    			
+    		 BitmapFactory.Options bfOptions=new BitmapFactory.Options();
+    		 bfOptions.inDither=false;                     //Disable Dithering mode
+    		 bfOptions.inPurgeable=true;                   //Tell to gc that whether it needs free memory, the Bitmap can be cleared
+    		 bfOptions.inInputShareable=true;              //Which kind of reference will be used to recover the Bitmap data after being clear, when it will be used in the future
+    		 bfOptions.inTempStorage=new byte[32 * 1024]; 
+    		 // Loads screenshot as bitmap
+    		mRotateBitmap=BitmapFactory.decodeFile(Environment.getExternalStorageDirectory()+ File.separator +"img.png",bfOptions);
+    		if(mRotateBitmap==null) {return;}
+    		
+    		// Makes sure offset is not smaller than the lowest pixel position possible.
+    		offsetY=Math.max(0, offsetY);
+    		offsetX=Math.max(0, offsetX);
+    		
+ 
+    		// If cropped screenshot hits edges of screen, stop it moving further
+    		if(offsetX+sizeW > mRotateBitmap.getWidth())
+    		{
+    			offsetX=mRotateBitmap.getWidth()-sizeW;
+    		}
+    		if(offsetY+sizeW > mRotateBitmap.getHeight())
+    		{
+    			offsetY=mRotateBitmap.getHeight()-sizeW;
+    		}		
+    		// Crop image with final values
+    		mRotateBitmap=Bitmap.createBitmap(mRotateBitmap, offsetX,offsetY,sizeW, sizeH);
+    		// Scale image by framesize
+    		mRotateBitmap=Bitmap.createScaledBitmap(mRotateBitmap, 220, 176, false);
+    		// Send Image
+    	
+            showBitmap(mRotateBitmap);
+            isReady=true;
         }
     };
 

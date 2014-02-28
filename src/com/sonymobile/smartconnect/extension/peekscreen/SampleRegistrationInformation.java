@@ -128,8 +128,8 @@ public class SampleRegistrationInformation extends RegistrationInformation {
     public boolean isDisplaySizeSupported(int width, int height) {
         return ((width == PeekScreenControlSW2.getSupportedControlWidth(mContext)
                 && height == PeekScreenControlSW2
-                        .getSupportedControlHeight(mContext) || width == SampleControlSmartWatch
-                .getSupportedControlWidth(mContext) && height == SampleControlSmartWatch
+                        .getSupportedControlHeight(mContext) || width == PeekScreenControlSW
+                .getSupportedControlWidth(mContext) && height == PeekScreenControlSW
                 .getSupportedControlHeight(mContext)) || (width == SampleControlSmartWirelessHeadsetPro
                 .getSupportedControlWidth(mContext) && height == SampleControlSmartWirelessHeadsetPro
                 .getSupportedControlHeight(mContext)));
